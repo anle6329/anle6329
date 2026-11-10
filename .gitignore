@@ -1,0 +1,45 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Environment variables and secrets
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.logA
+
+# Temporary files
+*.tmp
+
+# Generated audio
+recorded_audio/
+output/
+
+# Generated transcription
+transcriptions/
+
+# Model files
+*.gguf
+*.pt
+*.pth
+*.onnx

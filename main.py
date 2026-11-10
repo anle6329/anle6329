@@ -1,10 +1,13 @@
+from action_tools.tool_registry import execute_tool
 from audio_input.microphone import get_audio_devices , record_audio, save_audio_to_file 
 from speech_to_text.whisper import load_model, transcribe_audio
-import keyboard as kb
+from command.commands_router import command_router,identify_command_type, extract_arguments
 def main():
+
     devices = get_audio_devices()
-    model = load_model("small")
+    model = load_model("large-v3-turbo", device="cuda", compute_type="int8_float16")
     # Record audio for 5 seconds
+    print("Starting recording...")
     audio_data = record_audio(5)
 
     # Save audio to output.wav
@@ -12,6 +15,7 @@ def main():
     print("Audio recorded successfully!")
     transcription = transcribe_audio(model, "recorded_audio/output.wav")
     print("Transcription:", transcription)
-
+    command_router(transcription)
+    
 if __name__ == "__main__":
     main()

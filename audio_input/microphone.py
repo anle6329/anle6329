@@ -3,6 +3,25 @@ import sounddevice as sd
 import soundfile as sf
 import os 
 import config.input_setting as in_set ; 
+import os
+import sys
+from pathlib import Path
+
+site_packages = Path(sys.prefix) / "Lib" / "site-packages"
+
+dll_directories = [
+    site_packages / "nvidia" / "cublas" / "bin",
+    site_packages / "nvidia" / "cudnn" / "bin",
+    site_packages / "nvidia" / "cuda_runtime" / "bin",
+]
+
+# Keep DLL directory handles alive
+dll_handles = []
+
+for directory in dll_directories:
+    if directory.exists():
+        dll_handles.append(os.add_dll_directory(str(directory)))
+        os.environ["PATH"] = str(directory) + os.pathsep + os.environ["PATH"]
 def get_audio_devices():
     #Get a list of available audio input devices.
     devices = sd.query_devices()
