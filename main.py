@@ -2,6 +2,7 @@ from action_tools.tool_registry import execute_tool
 from audio_input.microphone import get_audio_devices , record_audio, save_audio_to_file 
 from speech_to_text.whisper import load_model, transcribe_audio
 from command.commands_router import command_router,identify_command_type, extract_arguments
+from LLM.ollama_client import generate_response
 def main():
 
     devices = get_audio_devices()
@@ -15,7 +16,9 @@ def main():
     print("Audio recorded successfully!")
     transcription = transcribe_audio(model, "recorded_audio/output.wav")
     print("Transcription:", transcription)
-    command_router(transcription)
+    response = generate_response(transcription)
+    print(response)
+    #command_router(transcription)
     
 if __name__ == "__main__":
     main()
