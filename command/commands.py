@@ -3,8 +3,16 @@ import os
 import shutil
 import pathlib
 def open_application(arguments_str):
-    open(arguments_str, output=False , throw_error=True)
+    try:
+        open(arguments_str, output=False , throw_error=True)
+    except ValueError(f"Failed to open app") as e :
+        print(e)
+        raise
     return f"Application '{arguments_str}' opened successfully."
 def close_application(arguments_str):
-    close(arguments_str, output=False , throw_error=True)
+    try:
+        close(arguments_str, output=False , throw_error=True)
+    except ValueError(f"Failed to close app") as e:
+        print(e)
+        raise
     return f"Application '{arguments_str}' closed successfully."
