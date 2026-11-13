@@ -35,8 +35,7 @@ dist/
 recorded_audio/
 output/
 
-# Generated transcription
-transcriptions/
+
 
 # Model files
 *.gguf

@@ -7,16 +7,12 @@ tools = {"open_application": open_application,
          #"delete_file": delete_file
         }
 command_types ={
-        "open application": {"open", "launch", "start", "run", "execute", "activate"},
-        "close application": {"close", "exit", "quit", "terminate", "shut", "end", "stop"},
-        #"save file":{"save", "store", "record", "keep", "archive", "preserve", "stash"},
-        #"get file":{"get", "retrieve", "fetch", "obtain", "acquire", "access"},
-        #"delete file":{"delete", "remove", "erase", "clear", "discard", "extinguish", "destroy"}
+        "open_application": {"open", "launch", "start", "run", "execute", "activate"},
+        "close_application": {"close", "exit", "quit", "terminate", "shut", "end", "stop"},
+        
     }
 commands = {
     "open application": "open_application",
     "close application": "close_application",
-    #"save file": "save_file",
-    #"get file": "get_file",
-    #"delete file": "delete_file"
+    
 }
