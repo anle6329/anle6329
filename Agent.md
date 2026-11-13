@@ -186,22 +186,53 @@ file with its default Windows application.
 Validate paths and restrict permitted locations. Require confirmation
 for destructive actions such as deleting files.
 
-### Command system --- baseline exists; planned redesign
+### Command system --- keyword-based multi-command router implemented
 
-Current concepts: - `tools`: tool name → Python function. -
-`command_types`: intent → keyword set (legacy keyword-routing
-baseline). - `commands`: intent → tool name.
+The laptop workflow has developed a working keyword-based command router.
+Its current functions are:
+
+- `clean_word(words)`: strips punctuation and removes configured connector
+  words from the token list.
+- `identify_all_command(clean_words)`: scans the cleaned words in order and
+  records every recognized command keyword with its command type and
+  position.
+- `extract_commands(words)`: cleans the transcript, identifies commands,
+  and extracts the words between each command keyword and the next command
+  keyword as that command's arguments.
+- `check_valid(command_list)`: currently checks that each detected command
+  has at least one argument.
+- `command_router(transcript)`: rejects empty input, extracts commands,
+  validates them, and executes each argument sequentially through
+  `execute_tool()`.
+
+The command dictionaries currently contain fields such as `command`,
+`keyword`, `pos`, and `argument`. Keep the field names consistent across
+the router; the current implementation uses the singular key `argument`
+for a list of argument strings.
+
+The intended interpretation is:
+- A recognized command keyword starts a new command.
+- Words between that keyword and the next recognized command keyword
+  belong to the current command's argument list.
+- Multiple arguments for one command are executed one at a time using the
+  same registered tool.
+- Multiple commands are executed in transcript order.
+
+The user has tested basic cases including one command, multiple arguments,
+multiple sequential commands, missing arguments, unrecognized commands,
+and empty transcripts. Continue testing against the current repository
+implementation rather than assuming this handoff document guarantees the
+latest code is bug-free.
+
+Current scope deliberately assumes Qwen will provide a plausible
+application name. A separate application-discovery/validation helper is
+a proposed next step, not yet implemented.
 
 The registry supports: - `register_tool(tool_name, tool_function)` -
 `get_tool(tool_name)` - `execute_tool(tool_name, *args, **kwargs)`
 
 It prevents duplicate registration and raises `ValueError` for unknown
 tools.
-
-The keyword router is only a temporary baseline. Limitations include
-handling only one command, set iteration not preserving keyword
-position, punctuation, and input validation. The intended direction is
-Qwen-based natural-language interpretation with structured output.
 
 ### Ollama / Qwen --- basic connection working
 
@@ -282,6 +313,32 @@ open Spotify, and finally close Notepad."
 
 Preserve action order. Conditional workflows are not currently required.
 
+### Current keyword-router interpretation rules
+
+For the present laptop implementation, command boundaries are determined
+by recognized command keywords, not by connector words:
+
+- A new recognized command keyword starts a new command.
+- Words after a command keyword and before the next command keyword are
+  collected as its arguments.
+- Connector words such as `and`, `then`, and `afterwards` are currently
+  removed during transcript cleaning. They are not used to determine
+  command boundaries.
+- If one command has multiple application arguments, execute the same
+  tool once per argument, in order, before moving to the next command.
+
+Negative-language handling (for example `not`, `don't`, `neither`, and
+`nor`) is explicitly deferred. Do not add a simplistic rule that removes
+everything after a negative word: it can accidentally discard later,
+unrelated commands. Revisit this when Qwen-based intent interpretation is
+implemented.
+
+For now, the user has chosen to assume Qwen does not hallucinate
+application names. This is a temporary development assumption, not a
+security guarantee. Python must still validate tool names and enforce the
+allowlist. Application discovery and validation can be added as a helper
+before execution.
+
 ### Suggested module responsibilities
 
 -   `LLM/prompts.py`: system and command-interpreter prompts.
@@ -300,19 +357,22 @@ avoid duplicate responsibilities.
 
 ### Core app --- current priority
 
-1.  Finish/refine command system and tool registry.
-2.  Finish basic action tools: application, filesystem, system.
-3.  Implement structured Qwen command interpretation.
-4.  Connect validated Qwen output to the command router and registry.
-5.  Handle normal conversation separately from commands.
-6.  Integrate Piper TTS.
-7.  Complete audio output.
+1.  Finish small support/helper functions for the command and application
+    workflow.
+2.  Add application discovery/validation so Python can check whether an
+    application target can be resolved on the device.
+3.  Continue testing the keyword router and registered action tools.
+4.  Implement structured Qwen command interpretation.
+5.  Connect validated Qwen output to the command router and registry.
+6.  Handle normal conversation separately from commands.
+7.  Integrate Piper TTS and complete audio output.
 8.  Integrate modules in `main.py`.
 9.  Test the complete pipeline end to end.
 
 Ollama connectivity and a starter system prompt are already
-working/prepared. The immediate next task is structured output and
-command interpretation.
+working/prepared. The immediate laptop task is to continue building small
+support functions; Qwen structured interpretation remains a later core
+integration task.
 
 ### Advanced features --- defer until core app works
 
@@ -377,7 +437,32 @@ files; the Python package alone is insufficient.
 -   Keep secrets and local configuration out of Git.
 -   Treat speech transcripts and LLM output as untrusted input.
 
-## 10. Handoff instructions
+## 10. Latest laptop progress --- 2026-11-13
+
+Completed/implemented in the current development discussion:
+
+- Built a keyword-based multi-command detector using transcript positions.
+- Combined segmentation and argument extraction in `extract_commands()`.
+- Added punctuation cleanup and connector-word removal in `clean_word()`.
+- Established sequential execution for multiple arguments belonging to
+  one command, followed by the next command.
+- Added basic validation for missing arguments and handling for empty or
+  unrecognized command lists.
+- Clarified that a bare `raise` inside an `except` block re-raises the
+  original exception; printing an error and continuing must not allow
+  invalid commands to execute.
+
+Next proposed work:
+
+- Build small support/helper functions.
+- Investigate application discovery/validation on Windows. Candidate
+  mechanisms: `shutil.which()`, `winreg`, and Start Menu shortcuts.
+- Keep the current router simple; do not implement negative connector
+  interpretation yet.
+- Continue to validate all tool names and arguments in Python before
+  execution.
+
+## 11. Handoff instructions
 
 ### Desktop conversation
 
@@ -393,12 +478,25 @@ yet.
 
 ### Laptop conversation
 
-Focus on existing code quality and reliability: 1. Inspect the current
-source files before suggesting changes. 2. Review correctness and edge
-cases. 3. Fix bugs before optional refactoring. 4. Add tests for changed
-behavior. 5. Avoid changing architecture or interfaces without
-coordinating with the desktop workflow. 6. Do not assume the newest
-desktop changes have already been pulled.
+Focus on the existing command router, support functions, code quality,
+and reliability:
+
+1. Inspect the current source files before suggesting changes.
+2. Review correctness and edge cases in `clean_word()`,
+   `identify_all_command()`, `extract_commands()`, `check_valid()`, and
+   `command_router()`.
+3. Fix bugs before optional refactoring and add tests for changed behavior.
+4. The next proposed helper is application discovery/validation. Possible
+   Windows approaches discussed are `shutil.which()`, the Windows Registry
+   via `winreg`, and Start Menu shortcuts. These are options to investigate,
+   not implemented functionality; each has coverage limitations.
+5. The current development assumption is that Qwen will not generate false
+   application names. Do not mistake this assumption for a guarantee or
+   bypass Python's tool allowlist.
+6. Negative-command interpretation is deferred until the Qwen/NLU stage.
+7. Avoid changing architecture or interfaces without coordinating with
+   the desktop workflow. Do not assume the newest desktop changes have
+   already been pulled.
 
 ### At the start of either workflow
 
