@@ -1,4 +1,4 @@
-from config.tool_list import command_types , connecter_list
+from config.tool_list import command_types , connector_list
 from action_tools.tool_registry import execute_tool 
 def identify_all_command(clean_words):
     #identify all command base on keyword listed (check tool_list.py for futher information)
@@ -13,9 +13,9 @@ def identify_all_command(clean_words):
                                      "pos"    :pos 
                                     })
     return command_list
-def extract_commands(words):
+def extract_commands(transcript):
     #seperate commands
-    clean_words = clean_word(words)
+    clean_words = clean_word(transcript)
     command_list = identify_all_command(clean_words)
     for i,command in enumerate(command_list) :
         current_pos = command["pos"]
@@ -25,22 +25,26 @@ def extract_commands(words):
         else :
             command["argument"] = clean_words[current_pos+1:]
     return command_list
-def clean_word(words):
+def clean_word(transcript):
+    words = transcript.lower().split() 
     # Remove unnecesorry (!?,.:;) and connectors
     clean_words = []
-    clean_words = [word.strip("!?,.:;") for word in words]
-    clean_words = [word for word in clean_words if word not in connecter_list ]
+    clean_words = [word.strip("!?,.:; ") for word in words]
+    clean_words = [word for word in clean_words if word and word not in connector_list ]
+                    #1        #1                    #2        #1
+                    #check if word#1 in clean_words is an item in 
+                    #connector_list to whether keep it or not (if it is ,remove vice versa)
+                    # #2 return false if the string is empty(#2) and will also be strip()
     return clean_words
 def check_valid(command_list):
     for command in command_list :
-        if not command["argument"]:
+        if not command["argument"] :
             raise ValueError(f"Every command must have valid application")
     return True 
 def command_router(transcript) :
     if not isinstance(transcript, str) or not transcript.strip():
         raise ValueError(f"Empty input")
-    words = transcript.lower().split() 
-    command_list = extract_commands(words) 
+    command_list = extract_commands(transcript) 
     if not command_list:
             raise ValueError("No valid command type found.")
     try:

@@ -12,7 +12,7 @@ def open_application(arguments_str):
 def close_application(arguments_str):
     try:
         close(arguments_str, output=False , throw_error=True)
-    except ValueError(f"Failed to close app") as e:
+    except ValueError as e:
         print(e)
         raise
     return f"Application '{arguments_str}' closed successfully."
